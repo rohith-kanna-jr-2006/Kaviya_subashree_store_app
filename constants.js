@@ -40,6 +40,18 @@ export const DELIVERY_SLOTS = [
     { id: 'slot4', label: 'Evening', time: '05:00 PM - 08:00 PM' },
 ];
 
+export const DELIVERY_OPTIONS = [
+    { id: 'standard', name: 'Standard Delivery', price: 0, time: '3-4 Days', icon: '🚚' },
+    { id: 'express', name: 'Express Delivery', price: 50, time: 'Today', icon: '⚡' },
+];
+
+export const PAYMENT_METHODS = [
+    { id: 'credit_card', name: 'Credit Card', icon: '💳' },
+    { id: 'debit_card', name: 'Debit Card', icon: '🏧' },
+    { id: 'upi', name: 'UPI', icon: '📱' },
+    { id: 'cod', name: 'Cash on Delivery', icon: '💵' },
+];
+
 export const PRODUCTS = [
     { id: 1, name: 'Organic Bananas', price: 0.99, unit: 'lb', category: 'fruits', rating: 4.8, image: '🍌', color: '#fefce8' },
     { id: 2, name: 'Red Strawberries', price: 3.49, unit: 'box', category: 'fruits', rating: 4.9, image: '🍓', color: '#fef2f2' },

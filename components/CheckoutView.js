@@ -1,11 +1,16 @@
-import { ArrowLeft, CheckCircle2, ChevronRight, Clock, MapPin, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle2, ChevronRight, Clock, CreditCard, MapPin, ShieldCheck, Truck } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { DELIVERY_SLOTS, THEME } from '../constants';
+import { DELIVERY_OPTIONS, DELIVERY_SLOTS, PAYMENT_METHODS, THEME } from '../constants';
 
 export default function CheckoutView({ cart, onSuccess, onBack }) {
     const [selectedSlot, setSelectedSlot] = useState(DELIVERY_SLOTS[0].id);
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const [selectedDelivery, setSelectedDelivery] = useState(DELIVERY_OPTIONS[0].id);
+    const [selectedPayment, setSelectedPayment] = useState(PAYMENT_METHODS[0].id);
+
+    const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const deliveryFee = DELIVERY_OPTIONS.find(o => o.id === selectedDelivery)?.price || 0;
+    const total = subtotal + deliveryFee;
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -74,16 +79,87 @@ export default function CheckoutView({ cart, onSuccess, onBack }) {
                 </View>
             </View>
 
+            {/* Delivery Options Section */}
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <View style={styles.cardIconBox}>
+                        <Truck color={THEME.primary} size={20} />
+                    </View>
+                    <Text style={styles.cardTitle}>Delivery Method</Text>
+                </View>
+                <View style={styles.slotsGrid}>
+                    {DELIVERY_OPTIONS.map((option) => {
+                        const isActive = selectedDelivery === option.id;
+                        return (
+                            <TouchableOpacity
+                                key={option.id}
+                                activeOpacity={0.8}
+                                style={[styles.slotItem, isActive && styles.slotItemActive]}
+                                onPress={() => setSelectedDelivery(option.id)}
+                            >
+                                <View style={[styles.slotRadio, isActive && styles.slotRadioActive]}>
+                                    {isActive && <View style={styles.slotRadioInner} />}
+                                </View>
+                                <View style={styles.slotTextContent}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                        <Text style={{ fontSize: 18 }}>{option.icon}</Text>
+                                        <Text style={[styles.slotLabel, isActive && styles.slotLabelActive]}>{option.name}</Text>
+                                    </View>
+                                    <Text style={[styles.slotTime, isActive && styles.slotTimeActive]}>{option.time} • {option.price === 0 ? 'FREE' : `₹${option.price}`}</Text>
+                                </View>
+                                {isActive && <CheckCircle2 size={18} color={THEME.primary} />}
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            </View>
+
+            {/* Payment Method Section */}
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <View style={styles.cardIconBox}>
+                        <CreditCard color={THEME.primary} size={20} />
+                    </View>
+                    <Text style={styles.cardTitle}>Payment Method</Text>
+                </View>
+                <View style={styles.slotsGrid}>
+                    {PAYMENT_METHODS.map((method) => {
+                        const isActive = selectedPayment === method.id;
+                        return (
+                            <TouchableOpacity
+                                key={method.id}
+                                activeOpacity={0.8}
+                                style={[styles.slotItem, isActive && styles.slotItemActive]}
+                                onPress={() => setSelectedPayment(method.id)}
+                            >
+                                <View style={[styles.slotRadio, isActive && styles.slotRadioActive]}>
+                                    {isActive && <View style={styles.slotRadioInner} />}
+                                </View>
+                                <View style={styles.slotTextContent}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                        <Text style={{ fontSize: 18 }}>{method.icon}</Text>
+                                        <Text style={[styles.slotLabel, isActive && styles.slotLabelActive]}>{method.name}</Text>
+                                    </View>
+                                </View>
+                                {isActive && <CheckCircle2 size={18} color={THEME.primary} />}
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            </View>
+
             {/* Order Summary Section */}
             <View style={styles.summaryBox}>
                 <Text style={styles.summaryTitle}>Order Summary</Text>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Items Total</Text>
-                    <Text style={styles.summaryVal}>₹{total.toFixed(2)}</Text>
+                    <Text style={styles.summaryVal}>₹{subtotal.toFixed(2)}</Text>
                 </View>
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Delivery Fee</Text>
-                    <Text style={[styles.summaryVal, { color: THEME.primary }]}>FREE</Text>
+                    <Text style={[styles.summaryVal, { color: THEME.primary }]}>
+                        {deliveryFee === 0 ? 'FREE' : `₹${deliveryFee.toFixed(2)}`}
+                    </Text>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.totalRow}>
@@ -92,7 +168,16 @@ export default function CheckoutView({ cart, onSuccess, onBack }) {
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.payBtn} activeOpacity={0.9} onPress={onSuccess}>
+            <TouchableOpacity
+                style={styles.payBtn}
+                activeOpacity={0.9}
+                onPress={() => onSuccess({
+                    slot: selectedSlot,
+                    delivery: selectedDelivery,
+                    payment: selectedPayment,
+                    total: total
+                })}
+            >
                 <Text style={styles.payBtnText}>Confirm Order</Text>
                 <View style={styles.payIconBox}>
                     <ShieldCheck color={THEME.primary} size={20} />

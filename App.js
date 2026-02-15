@@ -1,4 +1,4 @@
-import { ArrowRight, Home, MapPin, Search, ShoppingBag, User } from 'lucide-react-native';
+import { ArrowRight, Clock, Home, MapPin, Search, ShoppingBag } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
     Dimensions,
@@ -14,8 +14,9 @@ import {
 import CartModal from './components/CartModal';
 import CategoryChips from './components/CategoryChips';
 import CheckoutView from './components/CheckoutView';
+import OrderHistory from './components/OrderHistory';
 import ProductCard from './components/ProductCard';
-import { PRODUCTS, THEME } from './constants';
+import { DELIVERY_SLOTS, PRODUCTS, THEME } from './constants';
 
 const { width } = Dimensions.get('window');
 
@@ -27,6 +28,7 @@ export default function App() {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [wishlist, setWishlist] = useState([]);
+    const [orders, setOrders] = useState([]);
 
     const filteredProducts = useMemo(() => {
         return PRODUCTS.filter(p => {
@@ -58,6 +60,21 @@ export default function App() {
 
     const toggleWishlist = (id) => {
         setWishlist(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const handleOrderSuccess = (details) => {
+        const newOrder = {
+            id: Math.floor(100000 + Math.random() * 900000).toString(),
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            status: 'Confirmed',
+            items: [...cart], // Copy cart items
+            total: details.total,
+            deliverySlot: DELIVERY_SLOTS.find(s => s.id === details.slot)?.time || 'Standard',
+            paymentMethod: details.payment
+        };
+        setOrders(prev => [newOrder, ...prev]);
+        setCart([]);
+        setActiveTab('orders');
     };
 
     const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
@@ -235,7 +252,13 @@ export default function App() {
                 {activeTab === 'checkout' && (
                     <CheckoutView
                         cart={cart}
-                        onSuccess={() => { setCart([]); setActiveTab('home'); }}
+                        onSuccess={handleOrderSuccess}
+                        onBack={() => setActiveTab('shop')}
+                    />
+                )}
+                {activeTab === 'orders' && (
+                    <OrderHistory
+                        orders={orders}
                         onBack={() => setActiveTab('shop')}
                     />
                 )}
@@ -270,9 +293,13 @@ export default function App() {
                         <Text style={styles.tabText}>Cart</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.tabItem} activeOpacity={0.7}>
-                        <User color={THEME.textMuted} size={24} />
-                        <Text style={styles.tabText}>Profile</Text>
+                    <TouchableOpacity
+                        style={styles.tabItem}
+                        activeOpacity={0.7}
+                        onPress={() => setActiveTab('orders')}
+                    >
+                        <Clock color={activeTab === 'orders' ? THEME.primary : THEME.textMuted} size={24} />
+                        <Text style={[styles.tabText, activeTab === 'orders' && styles.tabTextActive]}>Orders</Text>
                     </TouchableOpacity>
                 </View>
             )}
